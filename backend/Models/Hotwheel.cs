@@ -7,4 +7,6 @@ public class Hotwheel
     public string Modelo { get; set; } = string.Empty;
     public decimal PrecioBase { get; set; }
     public string Rareza { get; set; } = string.Empty; // "Mainline", "STH", "RLC"
+
+    public virtual Projection Projection { get; set; }
 }
