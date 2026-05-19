@@ -1,4 +1,5 @@
 using backend.Data;
+using backend.Models;
 using backend.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,14 @@ public class HotwheelsController : ControllerBase
         return Ok(hotwheels);
     }
 
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] Hotwheel hotwheel)
+    {
+        _context.Hotwheels.Add(hotwheel);
+        await _context.SaveChangesAsync();
+        return CreatedAtAction(nameof(GetAll), new { id = hotwheel.Id }, hotwheel);
+    }
+
     [HttpGet("{id}/analisis")]
     public async Task<IActionResult> GetAnalisis(int id)
     {
@@ -37,10 +46,16 @@ public class HotwheelsController : ControllerBase
 
         var proyecciones = _msvpService.CalcularProyecciones(hotwheel);
         
+        var modelosSimilares = await _context.Hotwheels
+            .Where(h => h.Id != id && (h.CategoryId == hotwheel.CategoryId || h.Rareza == hotwheel.Rareza))
+            .Take(3)
+            .ToListAsync();
+        
         var resultado = new
         {
             Hotwheel = hotwheel,
-            Proyecciones = proyecciones
+            Proyecciones = proyecciones,
+            ModelosSimilares = modelosSimilares
         };
 
         return Ok(resultado);
