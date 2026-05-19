@@ -210,10 +210,16 @@ function App() {
                       <div className="card-body">
                         <h4 className="card-title" style={{ fontSize: '1.1rem' }}>{sim.nombre}</h4>
                         <div className="mb-2">{getRarityBadge(sim.rareza)}</div>
-                        <div className="card-text mt-2">
+                        <div className="card-text mt-2 mb-3">
                           <strong>Año:</strong> {sim.modelo} <br/>
                           <strong>Valor:</strong> ${sim.precioBase}
                         </div>
+                        <button 
+                          className="btn btn-primary mt-auto" 
+                          onClick={() => handleCalculateProjections(sim)}
+                        >
+                          Analizar este modelo
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -239,7 +245,7 @@ function App() {
           </header>
 
           <div className="d-flex justify-content-between align-items-center mb-4" style={{ flexWrap: 'wrap', gap: '1rem' }}>
-            <h2 style={{ margin: 0 }}>Catálogo Maestro</h2>
+            <h2 style={{ margin: 0 }}>Catálogo Maestro (Mercado Global)</h2>
             {!isLoading && categories.length > 0 && (
               <div className="category-filters d-flex" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
                 <button 
