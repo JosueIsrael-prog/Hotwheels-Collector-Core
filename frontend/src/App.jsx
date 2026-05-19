@@ -143,19 +143,101 @@ function App() {
       );
     }
 
-    return (
-      <>
-        <header className="mb-4 d-flex justify-content-between align-items-center">
-          <div>
-            <h1>Dashboard Analítico Core (MSVP)</h1>
-            <p className="card-text">Sistema de Proyecciones de Valor Estándar de Mercado</p>
+    if (activeTab === 'analisis') {
+      if (!selectedVehicle) {
+        return (
+          <div className="placeholder-view">
+            <h2>🔍 Seleccione un vehículo desde el catálogo en el Dashboard para generar sus proyecciones financieras.</h2>
           </div>
-          <button className="btn btn-success" onClick={() => setIsModalOpen(true)}>
-            + Registrar Nueva Pieza
-          </button>
-        </header>
+        );
+      }
 
-        <section className="mb-4">
+      return (
+        <section>
+          <header className="mb-4 d-flex justify-content-between align-items-center">
+            <h2 style={{ margin: 0 }}>Panel Analítico MSVP: {selectedVehicle.nombre}</h2>
+            <button className="btn btn-secondary" onClick={() => { setSelectedVehicle(null); setActiveTab('dashboard'); }}>
+              Cerrar Panel
+            </button>
+          </header>
+          
+          <div className="card mb-4">
+            <div className="card-body">
+              {isAnalysisLoading && (
+                <div className="loader-container">
+                  <div className="spinner"></div><span style={{marginLeft: '10px'}}>Generando proyecciones...</span>
+                </div>
+              )}
+              {analysisError && <div className="alert alert-danger"><strong>Error de Análisis:</strong> {analysisError}</div>}
+              
+              {analysis && !isAnalysisLoading && (
+                <div className="table-responsive">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Periodo</th>
+                        <th>Multiplicador MSVP</th>
+                        <th>Valor Proyectado (USD)</th>
+                        <th>Rareza Base</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {analysis.proyecciones && Object.entries(analysis.proyecciones).map(([years, projectedValue]) => {
+                        const multiplier = selectedVehicle.precioBase > 0 ? (projectedValue / selectedVehicle.precioBase) : 0;
+                        return (
+                          <tr key={years}>
+                            <td>{years} Años</td>
+                            <td>x{multiplier.toFixed(2)}</td>
+                            <td><strong>${projectedValue.toFixed(2)}</strong></td>
+                            <td>{getRarityBadge(selectedVehicle.rareza)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {analysis?.modelosSimilares && analysis.modelosSimilares.length > 0 && (
+            <>
+              <h3 className="mt-4 mb-3">Modelos Similares en el Mercado</h3>
+              <div className="row">
+                {analysis.modelosSimilares.map(sim => (
+                  <div className="col-md-4" key={sim.id}>
+                    <div className="card">
+                      <div className="card-body">
+                        <h4 className="card-title" style={{ fontSize: '1.1rem' }}>{sim.nombre}</h4>
+                        <div className="mb-2">{getRarityBadge(sim.rareza)}</div>
+                        <div className="card-text mt-2">
+                          <strong>Año:</strong> {sim.modelo} <br/>
+                          <strong>Valor:</strong> ${sim.precioBase}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+      );
+    }
+
+    if (activeTab === 'dashboard') {
+      return (
+        <section>
+          <header className="mb-4 d-flex justify-content-between align-items-center">
+            <div>
+              <h1 style={{ margin: 0, fontSize: '1.75rem' }}>Dashboard Analítico Core (MSVP)</h1>
+              <p className="card-text" style={{ marginTop: '0.25rem' }}>Sistema de Proyecciones de Valor Estándar de Mercado</p>
+            </div>
+            <button className="btn btn-success" onClick={() => setIsModalOpen(true)}>
+              + Registrar Nueva Pieza
+            </button>
+          </header>
+
           <div className="d-flex justify-content-between align-items-center mb-4" style={{ flexWrap: 'wrap', gap: '1rem' }}>
             <h2 style={{ margin: 0 }}>Catálogo Maestro</h2>
             {!isLoading && categories.length > 0 && (
@@ -212,74 +294,8 @@ function App() {
             ))}
           </div>
         </section>
-
-        {selectedVehicle && activeTab === 'analisis' && (
-          <section className="mt-4">
-            <h2>Panel Analítico MSVP: {selectedVehicle.nombre}</h2>
-            <div className="card mb-4">
-              <div className="card-body">
-                {isAnalysisLoading && (
-                  <div className="loader-container">
-                    <div className="spinner"></div><span style={{marginLeft: '10px'}}>Generando proyecciones...</span>
-                  </div>
-                )}
-                {analysisError && <div className="alert alert-danger"><strong>Error de Análisis:</strong> {analysisError}</div>}
-                
-                {analysis && !isAnalysisLoading && (
-                  <div className="table-responsive">
-                    <table className="table">
-                      <thead>
-                        <tr>
-                          <th>Periodo</th>
-                          <th>Multiplicador MSVP</th>
-                          <th>Valor Proyectado (USD)</th>
-                          <th>Rareza Base</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {analysis.proyecciones && Object.entries(analysis.proyecciones).map(([years, projectedValue]) => {
-                          const multiplier = selectedVehicle.precioBase > 0 ? (projectedValue / selectedVehicle.precioBase) : 0;
-                          return (
-                            <tr key={years}>
-                              <td>{years} Años</td>
-                              <td>x{multiplier.toFixed(2)}</td>
-                              <td><strong>${projectedValue.toFixed(2)}</strong></td>
-                              <td>{getRarityBadge(selectedVehicle.rareza)}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {analysis?.modelosSimilares && analysis.modelosSimilares.length > 0 && (
-              <>
-                <h3 className="mt-4 mb-3">Modelos Similares en el Mercado</h3>
-                <div className="row">
-                  {analysis.modelosSimilares.map(sim => (
-                    <div className="col-md-4" key={sim.id}>
-                      <div className="card">
-                        <div className="card-body">
-                          <h4 className="card-title" style={{ fontSize: '1.1rem' }}>{sim.nombre}</h4>
-                          <div className="mb-2">{getRarityBadge(sim.rareza)}</div>
-                          <div className="card-text mt-2">
-                            <strong>Año:</strong> {sim.modelo} <br/>
-                            <strong>Valor:</strong> ${sim.precioBase}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </section>
-        )}
-      </>
-    );
+      );
+    }
   };
 
   return (
