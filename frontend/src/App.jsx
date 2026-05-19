@@ -3,6 +3,9 @@ import './index.css';
 
 function App() {
   const [hotwheels, setHotwheels] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   
@@ -12,21 +15,29 @@ function App() {
   const [analysisError, setAnalysisError] = useState(null);
 
   useEffect(() => {
-    fetchHotwheels();
+    fetchData();
   }, []);
 
-  const fetchHotwheels = async () => {
+  const fetchData = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/v1/hotwheels');
-      if (!response.ok) {
-        throw new Error(`Error del servidor: ${response.status}`);
+      const [hwResponse, catResponse] = await Promise.all([
+        fetch('/api/v1/hotwheels'),
+        fetch('/api/v1/categories')
+      ]);
+
+      if (!hwResponse.ok || !catResponse.ok) {
+        throw new Error('Error al conectar con los servicios del backend.');
       }
-      const data = await response.json();
-      setHotwheels(data);
+
+      const hwData = await hwResponse.json();
+      const catData = await catResponse.json();
+
+      setHotwheels(hwData);
+      setCategories(catData);
     } catch (err) {
-      setError(err.message || 'No se pudo conectar con el servidor backend.');
+      setError(err.message || 'Error desconocido al cargar el dashboard.');
     } finally {
       setIsLoading(false);
     }
@@ -45,7 +56,7 @@ function App() {
       const data = await response.json();
       setAnalysis(data);
     } catch (err) {
-      setAnalysisError(err.message || 'Error al calcular las proyecciones.');
+      setAnalysisError(err.message || 'Error al calcular las proyecciones financieras.');
     } finally {
       setIsAnalysisLoading(false);
     }
@@ -56,13 +67,26 @@ function App() {
       case 'treasure hunt':
         return <span className="badge badge-warning">Treasure Hunt</span>;
       case 'super treasure hunt':
+      case 'sth':
         return <span className="badge badge-success">Super Treasure Hunt</span>;
       case 'exclusive':
-        return <span className="badge badge-info">Exclusive</span>;
+      case 'rlc':
+        return <span className="badge badge-info" style={{ color: '#000' }}>Redline Club</span>;
+      case 'mainline':
+        return <span className="badge badge-secondary">Mainline</span>;
       default:
         return <span className="badge badge-secondary">{rarity || 'Common'}</span>;
     }
   };
+
+  const getCategoryName = (categoryId) => {
+    const category = categories.find(c => c.id === categoryId);
+    return category ? category.nombre : 'Sin Categoría';
+  };
+
+  const filteredHotwheels = selectedCategory 
+    ? hotwheels.filter(hw => hw.categoryId === selectedCategory)
+    : hotwheels;
 
   return (
     <div className="container">
@@ -71,9 +95,31 @@ function App() {
         <p className="card-text">Sistema de Proyecciones de Valor Estándar de Mercado para Hotwheels</p>
       </header>
 
-      {/* Sección 1: Catálogo Maestro */}
       <section className="mb-4">
-        <h2>Catálogo Maestro</h2>
+        <div className="d-flex justify-content-between align-items-center mb-4" style={{ flexWrap: 'wrap', gap: '1rem' }}>
+          <h2 style={{ margin: 0 }}>Catálogo Maestro</h2>
+          {!isLoading && categories.length > 0 && (
+            <div className="category-filters d-flex" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+              <button 
+                className={`btn ${selectedCategory === null ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setSelectedCategory(null)}
+                style={{ width: 'auto' }}
+              >
+                Todos
+              </button>
+              {categories.map(cat => (
+                <button 
+                  key={cat.id}
+                  className={`btn ${selectedCategory === cat.id ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  style={{ width: 'auto' }}
+                >
+                  {cat.nombre}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         
         {isLoading && (
           <div className="loader-container">
@@ -87,25 +133,29 @@ function App() {
           </div>
         )}
 
-        {!isLoading && !error && hotwheels.length === 0 && (
+        {!isLoading && !error && filteredHotwheels.length === 0 && (
           <div className="alert alert-info">
-            No se encontraron vehículos en el catálogo.
+            No se encontraron vehículos en esta categoría.
           </div>
         )}
 
         <div className="row">
-          {hotwheels.map((hw) => (
+          {filteredHotwheels.map((hw) => (
             <div className="col-md-4" key={hw.id}>
               <div className="card">
                 <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h3 className="card-title" style={{ margin: 0 }}>{hw.modelName || hw.name}</h3>
-                    {getRarityBadge(hw.rarity)}
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <h3 className="card-title" style={{ margin: 0 }}>{hw.nombre}</h3>
+                    {getRarityBadge(hw.rareza)}
+                  </div>
+                  <div className="mb-3">
+                    <span className="badge" style={{ backgroundColor: '#e9ecef', color: '#212529', border: '1px solid #ced4da', fontSize: '0.8rem', padding: '0.4em 0.8em' }}>
+                      {getCategoryName(hw.categoryId)}
+                    </span>
                   </div>
                   <div className="card-text">
-                    <strong>Año:</strong> {hw.year} <br/>
-                    <strong>Serie:</strong> {hw.series} <br/>
-                    <strong>Valor Base:</strong> ${hw.baseValue}
+                    <strong>Modelo/Año:</strong> {hw.modelo} <br/>
+                    <strong>Valor Base:</strong> ${hw.precioBase}
                   </div>
                   <button 
                     className="btn btn-primary mt-auto"
@@ -121,10 +171,9 @@ function App() {
         </div>
       </section>
 
-      {/* Sección 2 y 3: Panel Analítico MSVP y Resultados */}
       {selectedVehicle && (
         <section className="mt-4">
-          <h2>Panel Analítico MSVP: {selectedVehicle.modelName || selectedVehicle.name}</h2>
+          <h2>Panel Analítico MSVP: {selectedVehicle.nombre}</h2>
           <div className="card">
             <div className="card-body">
               {isAnalysisLoading && (
@@ -152,53 +201,17 @@ function App() {
                       </tr>
                     </thead>
                     <tbody>
-                      {/* En caso de que el backend devuelva las proyecciones como array 'projections' */}
-                      {analysis.projections?.map((proj, index) => (
-                        <tr key={index}>
-                          <td>{proj.years} Año{proj.years > 1 ? 's' : ''}</td>
-                          <td>x{proj.multiplier.toFixed(2)}</td>
-                          <td><strong>${proj.projectedValue.toFixed(2)}</strong></td>
-                          <td>{getRarityBadge(selectedVehicle.rarity)}</td>
-                        </tr>
-                      ))}
-                      {/* En caso de que el backend devuelva las proyecciones directamente como un array en analysis */}
-                      {Array.isArray(analysis) && analysis.map((proj, index) => (
-                        <tr key={index}>
-                          <td>{proj.years} Año{proj.years > 1 ? 's' : ''}</td>
-                          <td>x{proj.multiplier?.toFixed(2) || (proj.multiplier)}</td>
-                          <td><strong>${proj.projectedValue?.toFixed(2) || (proj.projectedValue)}</strong></td>
-                          <td>{getRarityBadge(selectedVehicle.rarity)}</td>
-                        </tr>
-                      ))}
-                      {/* Si el backend devuelve un objeto con fields individuales por año */}
-                      {!analysis.projections && !Array.isArray(analysis) && analysis.year1 && (
-                         <>
-                           <tr>
-                             <td>1 Año</td>
-                             <td>x{analysis.year1.multiplier?.toFixed(2)}</td>
-                             <td><strong>${analysis.year1.projectedValue?.toFixed(2)}</strong></td>
-                             <td>{getRarityBadge(selectedVehicle.rarity)}</td>
-                           </tr>
-                           <tr>
-                             <td>5 Años</td>
-                             <td>x{analysis.year5.multiplier?.toFixed(2)}</td>
-                             <td><strong>${analysis.year5.projectedValue?.toFixed(2)}</strong></td>
-                             <td>{getRarityBadge(selectedVehicle.rarity)}</td>
-                           </tr>
-                           <tr>
-                             <td>10 Años</td>
-                             <td>x{analysis.year10.multiplier?.toFixed(2)}</td>
-                             <td><strong>${analysis.year10.projectedValue?.toFixed(2)}</strong></td>
-                             <td>{getRarityBadge(selectedVehicle.rarity)}</td>
-                           </tr>
-                           <tr>
-                             <td>20 Años</td>
-                             <td>x{analysis.year20.multiplier?.toFixed(2)}</td>
-                             <td><strong>${analysis.year20.projectedValue?.toFixed(2)}</strong></td>
-                             <td>{getRarityBadge(selectedVehicle.rarity)}</td>
-                           </tr>
-                         </>
-                      )}
+                      {analysis.proyecciones && typeof analysis.proyecciones === 'object' && Object.entries(analysis.proyecciones).map(([years, projectedValue]) => {
+                        const multiplier = selectedVehicle.precioBase > 0 ? (projectedValue / selectedVehicle.precioBase) : 0;
+                        return (
+                          <tr key={years}>
+                            <td>{years} Años</td>
+                            <td>x{multiplier.toFixed(2)}</td>
+                            <td><strong>${projectedValue.toFixed(2)}</strong></td>
+                            <td>{getRarityBadge(selectedVehicle.rareza)}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                   <div className="mt-4">
