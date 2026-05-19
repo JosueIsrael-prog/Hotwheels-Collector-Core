@@ -6,7 +6,10 @@ public class Hotwheel
     public string Nombre { get; set; } = string.Empty;
     public string Modelo { get; set; } = string.Empty;
     public decimal PrecioBase { get; set; }
-    public string Rareza { get; set; } = string.Empty; // "Mainline", "STH", "RLC"
+    public string Rareza { get; set; } = string.Empty;
+
+    public int CategoryId { get; set; }
+    public virtual Category Category { get; set; }
 
     public virtual Projection Projection { get; set; }
 }
