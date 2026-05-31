@@ -38,19 +38,19 @@ public class HotwheelsController : ControllerBase
     public async Task<IActionResult> GetAnalisis(int id)
     {
         var hotwheel = await _context.Hotwheels.FindAsync(id);
-        
+
         if (hotwheel == null)
         {
             return NotFound(new { message = "Hotwheel no encontrado en el catálogo maestro." });
         }
 
-        var proyecciones = _msvpService.CalcularProyecciones(hotwheel);
-        
+        var proyecciones = await _msvpService.CalcularProyeccionesAsync(hotwheel);
+
         var modelosSimilares = await _context.Hotwheels
             .Where(h => h.Id != id && (h.CategoryId == hotwheel.CategoryId || h.Rareza == hotwheel.Rareza))
             .Take(3)
             .ToListAsync();
-        
+
         var resultado = new
         {
             Hotwheel = hotwheel,

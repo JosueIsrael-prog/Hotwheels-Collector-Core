@@ -10,5 +10,5 @@ public class Projection
     public decimal Year20 { get; set; }
     
     public int HotwheelId { get; set; }
-    public virtual Hotwheel Hotwheel { get; set; }
+    public virtual Hotwheel? Hotwheel { get; set; }
 }

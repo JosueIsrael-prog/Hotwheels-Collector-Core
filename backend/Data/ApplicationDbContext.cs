@@ -12,6 +12,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<Hotwheel> Hotwheels { get; set; }
     public DbSet<Projection> Projections { get; set; }
     public DbSet<Category> Categories { get; set; }
+    public DbSet<Usuario> Usuarios { get; set; }
+    public DbSet<FactorExterno> FactoresExternos { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -20,6 +22,8 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Category>().ToTable("categories");
         modelBuilder.Entity<Hotwheel>().ToTable("hotwheels");
         modelBuilder.Entity<Projection>().ToTable("proyecciones");
+        modelBuilder.Entity<Usuario>().ToTable("usuarios");
+        modelBuilder.Entity<FactorExterno>().ToTable("factores_externos");
 
         modelBuilder.Entity<Hotwheel>()
             .HasOne(h => h.Projection)
