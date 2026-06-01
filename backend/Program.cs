@@ -11,6 +11,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<MSVPService>();
+builder.Services.AddScoped<ScoutingEngineService>();
 
 builder.Services.AddCors(options =>
 {

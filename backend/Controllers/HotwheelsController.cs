@@ -12,11 +12,13 @@ public class HotwheelsController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
     private readonly MSVPService _msvpService;
+    private readonly ScoutingEngineService _scoutingEngineService;
 
-    public HotwheelsController(ApplicationDbContext context, MSVPService msvpService)
+    public HotwheelsController(ApplicationDbContext context, MSVPService msvpService, ScoutingEngineService scoutingEngineService)
     {
         _context = context;
         _msvpService = msvpService;
+        _scoutingEngineService = scoutingEngineService;
     }
 
     [HttpGet]
@@ -46,10 +48,7 @@ public class HotwheelsController : ControllerBase
 
         var proyecciones = await _msvpService.CalcularProyeccionesAsync(hotwheel);
 
-        var modelosSimilares = await _context.Hotwheels
-            .Where(h => h.Id != id && (h.CategoryId == hotwheel.CategoryId || h.Rareza == hotwheel.Rareza))
-            .Take(3)
-            .ToListAsync();
+        var modelosSimilares = await _scoutingEngineService.ObtenerModelosSimilaresAsync(hotwheel);
 
         var resultado = new
         {

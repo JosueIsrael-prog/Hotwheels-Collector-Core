@@ -30,37 +30,58 @@ public class MSVPService
         foreach (var anio in anios)
         {
             decimal valorCompuesto = hotwheel.PrecioBase * (decimal)Math.Pow((double)(1 + tasaBase), anio);
-            decimal acumuladoFactores = 0m;
-            var detalleFactores = new List<DetalleFactorImpacto>();
+            
+            decimal acumuladoConservador = 0m;
+            decimal acumuladoEsperado = 0m;
+            decimal acumuladoAgresivo = 0m;
+            
+            var detalleConservador = new List<DetalleFactorImpacto>();
+            var detalleEsperado = new List<DetalleFactorImpacto>();
+            var detalleAgresivo = new List<DetalleFactorImpacto>();
 
             foreach (var factor in factores)
             {
-                decimal incremento = valorCompuesto * factor.ImpactoPorcentaje;
-                acumuladoFactores += incremento;
+                // Conservador: impacto reducido al 50%
+                decimal incrementoConservador = valorCompuesto * factor.ImpactoPorcentaje * 0.5m;
+                acumuladoConservador += incrementoConservador;
+                detalleConservador.Add(new DetalleFactorImpacto { NombreFactor = factor.NombreFactor, Porcentaje = factor.ImpactoPorcentaje * 0.5m, IncrementoAbsoluto = Math.Round(incrementoConservador, 2) });
 
-                detalleFactores.Add(new DetalleFactorImpacto
-                {
-                    NombreFactor = factor.NombreFactor,
-                    Porcentaje = factor.ImpactoPorcentaje,
-                    IncrementoAbsoluto = Math.Round(incremento, 2)
-                });
+                // Esperado: impacto base (100%)
+                decimal incrementoEsperado = valorCompuesto * factor.ImpactoPorcentaje;
+                acumuladoEsperado += incrementoEsperado;
+                detalleEsperado.Add(new DetalleFactorImpacto { NombreFactor = factor.NombreFactor, Porcentaje = factor.ImpactoPorcentaje, IncrementoAbsoluto = Math.Round(incrementoEsperado, 2) });
+
+                // Agresivo: impacto potenciado al 150%
+                decimal incrementoAgresivo = valorCompuesto * factor.ImpactoPorcentaje * 1.5m;
+                acumuladoAgresivo += incrementoAgresivo;
+                detalleAgresivo.Add(new DetalleFactorImpacto { NombreFactor = factor.NombreFactor, Porcentaje = factor.ImpactoPorcentaje * 1.5m, IncrementoAbsoluto = Math.Round(incrementoAgresivo, 2) });
             }
-
-            decimal valorFinal = Math.Round(valorCompuesto + acumuladoFactores, 2);
-            decimal multiplicador = hotwheel.PrecioBase > 0 ? Math.Round(valorFinal / hotwheel.PrecioBase, 2) : 0;
 
             resultados.Add(new ProyeccionAnual
             {
                 Anio = anio,
                 ValorBase = Math.Round(valorCompuesto, 2),
-                AjusteFactores = Math.Round(acumuladoFactores, 2),
-                ValorFinal = valorFinal,
-                Multiplicador = multiplicador,
-                Factores = detalleFactores
+                EscenarioConservador = CrearEscenario(hotwheel.PrecioBase, valorCompuesto, acumuladoConservador, detalleConservador),
+                EscenarioEsperado = CrearEscenario(hotwheel.PrecioBase, valorCompuesto, acumuladoEsperado, detalleEsperado),
+                EscenarioAgresivo = CrearEscenario(hotwheel.PrecioBase, valorCompuesto, acumuladoAgresivo, detalleAgresivo)
             });
         }
 
         return resultados;
+    }
+
+    private EscenarioProyeccion CrearEscenario(decimal precioInicial, decimal valorCompuesto, decimal acumuladoFactores, List<DetalleFactorImpacto> factores)
+    {
+        decimal valorFinal = Math.Round(valorCompuesto + acumuladoFactores, 2);
+        decimal multiplicador = precioInicial > 0 ? Math.Round(valorFinal / precioInicial, 2) : 0;
+
+        return new EscenarioProyeccion
+        {
+            AjusteFactores = Math.Round(acumuladoFactores, 2),
+            ValorFinal = valorFinal,
+            Multiplicador = multiplicador,
+            Factores = factores
+        };
     }
 }
 
@@ -68,6 +89,13 @@ public class ProyeccionAnual
 {
     public int Anio { get; set; }
     public decimal ValorBase { get; set; }
+    public EscenarioProyeccion EscenarioConservador { get; set; } = new();
+    public EscenarioProyeccion EscenarioEsperado { get; set; } = new();
+    public EscenarioProyeccion EscenarioAgresivo { get; set; } = new();
+}
+
+public class EscenarioProyeccion
+{
     public decimal AjusteFactores { get; set; }
     public decimal ValorFinal { get; set; }
     public decimal Multiplicador { get; set; }
