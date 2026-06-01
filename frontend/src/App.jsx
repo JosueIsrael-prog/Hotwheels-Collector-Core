@@ -295,10 +295,10 @@ function App() {
                       {analysis.proyecciones?.map(p => (
                         <tr key={p.anio}>
                           <td>{p.anio} {p.anio === 1 ? 'Año' : 'Años'}</td>
-                          <td>${p.valorBase.toFixed(2)}</td>
-                          <td style={{color: 'var(--accent-green)'}}>+${p.ajusteFactores.toFixed(2)}</td>
-                          <td style={{fontWeight: 600}}>${p.valorFinal.toFixed(2)}</td>
-                          <td>x{p.multiplicador.toFixed(2)}</td>
+                          <td>${p.valorBase?.toFixed(2)}</td>
+                          <td style={{color: 'var(--accent-green)'}}>+${p.escenarioEsperado?.ajusteFactores?.toFixed(2)}</td>
+                          <td style={{fontWeight: 600}}>${p.escenarioEsperado?.valorFinal?.toFixed(2)}</td>
+                          <td>x{p.escenarioEsperado?.multiplicador?.toFixed(2)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -311,11 +311,11 @@ function App() {
               <div className="card mb-4">
                 <div className="card-body">
                   <h3 style={{marginBottom: '1rem'}}>Desglose de Factores Externos (Proyección a {analysis.proyecciones[analysis.proyecciones.length - 1].anio} años)</h3>
-                  {analysis.proyecciones[analysis.proyecciones.length - 1].factores?.map((f, i) => (
+                  {analysis.proyecciones[analysis.proyecciones.length - 1].escenarioEsperado?.factores?.map((f, i) => (
                     <div className="factor-row" key={i}>
                       <span className="factor-name">{f.nombreFactor}</span>
-                      <span className="factor-pct">{(f.porcentaje * 100).toFixed(0)}%</span>
-                      <span className="factor-val">+${f.incrementoAbsoluto.toFixed(2)}</span>
+                      <span className="factor-pct">{(f.porcentaje * 100)?.toFixed(0)}%</span>
+                      <span className="factor-val">+${f.incrementoAbsoluto?.toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
