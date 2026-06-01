@@ -3,10 +3,18 @@ import './index.css';
 
 function App() {
   const [user, setUser] = useState(null);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState(null);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regRol, setRegRol] = useState('Coleccionista');
+  const [regError, setRegError] = useState(null);
+  const [regLoading, setRegLoading] = useState(false);
+  const [regSuccess, setRegSuccess] = useState(null);
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [hotwheels, setHotwheels] = useState([]);
@@ -128,26 +136,91 @@ function App() {
 
   const filteredHotwheels = selectedCategory ? hotwheels.filter(hw => hw.categoryId === selectedCategory) : hotwheels;
 
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setRegLoading(true);
+    setRegError(null);
+    setRegSuccess(null);
+    try {
+      const response = await fetch('/api/v1/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: regName, email: regEmail, password: regPassword, rol: regRol })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Error en el registro.');
+      setRegSuccess('Cuenta creada exitosamente. Inicia sesión.');
+      setRegName(''); setRegEmail(''); setRegPassword(''); setRegRol('Coleccionista');
+      setTimeout(() => { setIsRegistering(false); setRegSuccess(null); }, 1500);
+    } catch (err) {
+      setRegError(err.message);
+    } finally {
+      setRegLoading(false);
+    }
+  };
+
   if (!user) {
     return (
       <div className="login-wrapper">
         <div className="login-card">
           <h2>Hot Wheels Analytics</h2>
-          <p>Ingresa tus credenciales para acceder al sistema.</p>
-          {loginError && <div className="alert alert-danger">{loginError}</div>}
-          <form onSubmit={handleLogin}>
-            <div className="form-group">
-              <label className="form-label">Email</label>
-              <input type="email" required className="form-control" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Contraseña</label>
-              <input type="password" required className="form-control" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} />
-            </div>
-            <button type="submit" className="btn btn-primary btn-block mt-3" disabled={loginLoading}>
-              {loginLoading ? 'Verificando...' : 'Iniciar Sesión'}
-            </button>
-          </form>
+          <p>{isRegistering ? 'Crea una cuenta para acceder al sistema.' : 'Ingresa tus credenciales para acceder al sistema.'}</p>
+
+          {!isRegistering ? (
+            <>
+              {loginError && <div className="alert alert-danger">{loginError}</div>}
+              <form onSubmit={handleLogin}>
+                <div className="form-group">
+                  <label className="form-label">Email</label>
+                  <input type="email" required className="form-control" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Contraseña</label>
+                  <input type="password" required className="form-control" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} />
+                </div>
+                <button type="submit" className="btn btn-primary btn-block mt-3" disabled={loginLoading}>
+                  {loginLoading ? 'Verificando...' : 'Iniciar Sesión'}
+                </button>
+              </form>
+              <p style={{textAlign: 'center', marginTop: '1rem', fontSize: '0.85rem'}}>
+                <span style={{color: 'var(--text-secondary)'}}>¿No tienes cuenta? </span>
+                <span style={{color: 'var(--accent-blue)', cursor: 'pointer'}} onClick={() => { setIsRegistering(true); setLoginError(null); }}>Regístrate aquí</span>
+              </p>
+            </>
+          ) : (
+            <>
+              {regError && <div className="alert alert-danger">{regError}</div>}
+              {regSuccess && <div className="alert alert-info">{regSuccess}</div>}
+              <form onSubmit={handleRegister}>
+                <div className="form-group">
+                  <label className="form-label">Nombre</label>
+                  <input type="text" required className="form-control" value={regName} onChange={e => setRegName(e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Email</label>
+                  <input type="email" required className="form-control" value={regEmail} onChange={e => setRegEmail(e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Contraseña</label>
+                  <input type="password" required className="form-control" value={regPassword} onChange={e => setRegPassword(e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Rol</label>
+                  <select className="form-control" value={regRol} onChange={e => setRegRol(e.target.value)}>
+                    <option value="Coleccionista">Coleccionista</option>
+                    <option value="Administrador">Administrador</option>
+                  </select>
+                </div>
+                <button type="submit" className="btn btn-success btn-block mt-3" disabled={regLoading}>
+                  {regLoading ? 'Registrando...' : 'Crear Cuenta'}
+                </button>
+              </form>
+              <p style={{textAlign: 'center', marginTop: '1rem', fontSize: '0.85rem'}}>
+                <span style={{color: 'var(--text-secondary)'}}>¿Ya tienes cuenta? </span>
+                <span style={{color: 'var(--accent-blue)', cursor: 'pointer'}} onClick={() => { setIsRegistering(false); setRegError(null); setRegSuccess(null); }}>Inicia sesión</span>
+              </p>
+            </>
+          )}
         </div>
       </div>
     );

@@ -1,4 +1,5 @@
 using backend.Data;
+using backend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,6 +32,32 @@ public class AuthController : ControllerBase
             usuario.Nombre,
             usuario.Email,
             usuario.Rol
+        });
+    }
+
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] Usuario nuevoUsuario)
+    {
+        var existente = await _context.Usuarios.AnyAsync(u => u.Email == nuevoUsuario.Email);
+
+        if (existente)
+        {
+            return BadRequest(new { message = "El correo electrónico ya se encuentra registrado." });
+        }
+
+        if (string.IsNullOrWhiteSpace(nuevoUsuario.Rol))
+        {
+            nuevoUsuario.Rol = "Coleccionista";
+        }
+
+        _context.Usuarios.Add(nuevoUsuario);
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(Login), new { id = nuevoUsuario.Id }, new
+        {
+            nuevoUsuario.Nombre,
+            nuevoUsuario.Email,
+            nuevoUsuario.Rol
         });
     }
 }
