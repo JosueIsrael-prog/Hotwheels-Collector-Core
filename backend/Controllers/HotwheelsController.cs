@@ -22,9 +22,11 @@ public class HotwheelsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] int usuarioId)
     {
-        var hotwheels = await _context.Hotwheels.ToListAsync();
+        var hotwheels = await _context.Hotwheels
+            .Where(h => h.UsuarioId == usuarioId)
+            .ToListAsync();
         return Ok(hotwheels);
     }
 
@@ -37,16 +39,41 @@ public class HotwheelsController : ControllerBase
     }
 
     [HttpGet("{id}/analisis")]
-    public async Task<IActionResult> GetAnalisis(int id)
+    public async Task<IActionResult> GetAnalisis(int id, [FromQuery] int usuarioId)
     {
         var hotwheel = await _context.Hotwheels.FindAsync(id);
 
-        if (hotwheel == null)
+        if (hotwheel == null || hotwheel.UsuarioId != usuarioId)
         {
-            return NotFound(new { message = "Hotwheel no encontrado en el catálogo maestro." });
+            return NotFound(new { message = "Hotwheel no encontrado en su colección." });
         }
 
         var proyecciones = await _msvpService.CalcularProyeccionesAsync(hotwheel);
+
+        var existente = await _context.Projections.FirstOrDefaultAsync(p => p.HotwheelId == id);
+
+        if (existente != null)
+        {
+            existente.CurrentValue = hotwheel.PrecioBase;
+            existente.Year1 = proyecciones[0].EscenarioEsperado.ValorFinal;
+            existente.Year5 = proyecciones[1].EscenarioEsperado.ValorFinal;
+            existente.Year10 = proyecciones[2].EscenarioEsperado.ValorFinal;
+            existente.Year20 = proyecciones[3].EscenarioEsperado.ValorFinal;
+        }
+        else
+        {
+            _context.Projections.Add(new Projection
+            {
+                CurrentValue = hotwheel.PrecioBase,
+                Year1 = proyecciones[0].EscenarioEsperado.ValorFinal,
+                Year5 = proyecciones[1].EscenarioEsperado.ValorFinal,
+                Year10 = proyecciones[2].EscenarioEsperado.ValorFinal,
+                Year20 = proyecciones[3].EscenarioEsperado.ValorFinal,
+                HotwheelId = hotwheel.Id
+            });
+        }
+
+        await _context.SaveChangesAsync();
 
         var modelosSimilares = await _scoutingEngineService.ObtenerModelosSimilaresAsync(hotwheel);
 

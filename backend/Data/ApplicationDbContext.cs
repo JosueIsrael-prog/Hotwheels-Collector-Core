@@ -34,5 +34,10 @@ public class ApplicationDbContext : DbContext
             .HasOne(h => h.Category)
             .WithMany(c => c.Hotwheels)
             .HasForeignKey(h => h.CategoryId);
+
+        modelBuilder.Entity<Hotwheel>()
+            .HasOne(h => h.Usuario)
+            .WithMany(u => u.Hotwheels)
+            .HasForeignKey(h => h.UsuarioId);
     }
 }

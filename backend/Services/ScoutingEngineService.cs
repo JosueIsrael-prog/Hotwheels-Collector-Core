@@ -16,32 +16,31 @@ public class ScoutingEngineService
     public async Task<List<Hotwheel>> ObtenerModelosSimilaresAsync(Hotwheel objetivo, int cantidad = 3)
     {
         var candidatos = await _context.Hotwheels
-            .Where(h => h.Id != objetivo.Id && (h.CategoryId == objetivo.CategoryId || h.Rareza == objetivo.Rareza))
+            .Where(h => h.Id != objetivo.Id
+                && h.UsuarioId == objetivo.UsuarioId
+                && (h.CategoryId == objetivo.CategoryId || h.Rareza == objetivo.Rareza))
             .ToListAsync();
 
         int parseModelo(string modeloStr)
         {
             if (int.TryParse(modeloStr, out int anio))
                 return anio;
-            return 2000; // Valor por defecto si no es parseable
+            return 2000;
         }
 
         int objetivoAnio = parseModelo(objetivo.Modelo);
-        decimal w1 = 0.7m; // Peso Precio
-        decimal w2 = 0.3m; // Peso Año Modelo
+        decimal w1 = 0.7m;
+        decimal w2 = 0.3m;
 
         var evaluados = candidatos.Select(c =>
         {
             int cAnio = parseModelo(c.Modelo);
             
-            // Deltas
             decimal deltaPrecio = c.PrecioBase - objetivo.PrecioBase;
             decimal deltaAnio = (decimal)(cAnio - objetivoAnio);
 
-            // Suma de deltas al cuadrado ponderados
             double mpiCuadrado = (double)(w1 * (deltaPrecio * deltaPrecio) + w2 * (deltaAnio * deltaAnio));
             
-            // Índice de Proximidad de Mercado (MPI)
             double mpi = Math.Sqrt(mpiCuadrado);
 
             return new { Vehiculo = c, Score = mpi };

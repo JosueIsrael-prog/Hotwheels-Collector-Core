@@ -29,6 +29,7 @@ public class AuthController : ControllerBase
 
         return Ok(new
         {
+            usuario.Id,
             usuario.Nombre,
             usuario.Email,
             usuario.Rol
@@ -55,6 +56,7 @@ public class AuthController : ControllerBase
 
         return CreatedAtAction(nameof(Login), new { id = nuevoUsuario.Id }, new
         {
+            nuevoUsuario.Id,
             nuevoUsuario.Nombre,
             nuevoUsuario.Email,
             nuevoUsuario.Rol

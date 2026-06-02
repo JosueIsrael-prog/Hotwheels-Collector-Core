@@ -67,6 +67,10 @@ function App() {
     setActiveTab('dashboard');
     setSelectedVehicle(null);
     setAnalysis(null);
+    setHotwheels([]);
+    setCategories([]);
+    setFactores([]);
+    setSelectedCategory(null);
   };
 
   const fetchData = async () => {
@@ -74,7 +78,7 @@ function App() {
     setError(null);
     try {
       const [hwRes, catRes, facRes] = await Promise.all([
-        fetch('/api/v1/hotwheels'),
+        fetch(`/api/v1/hotwheels?usuarioId=${user.id}`),
         fetch('/api/v1/categories'),
         fetch('/api/v1/factoresexternos')
       ]);
@@ -96,7 +100,7 @@ function App() {
     setAnalysisError(null);
     setActiveTab('analisis');
     try {
-      const response = await fetch(`/api/v1/hotwheels/${vehicle.id}/analisis`);
+      const response = await fetch(`/api/v1/hotwheels/${vehicle.id}/analisis?usuarioId=${user.id}`);
       if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
       setAnalysis(await response.json());
     } catch (err) {
@@ -109,7 +113,7 @@ function App() {
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     try {
-      const payload = { ...newPiece, precioBase: parseFloat(newPiece.precioBase), categoryId: parseInt(newPiece.categoryId, 10) };
+      const payload = { ...newPiece, precioBase: parseFloat(newPiece.precioBase), categoryId: parseInt(newPiece.categoryId, 10), usuarioId: user.id };
       const response = await fetch('/api/v1/hotwheels', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (!response.ok) throw new Error('Error al registrar la pieza.');
       setIsModalOpen(false);

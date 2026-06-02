@@ -11,10 +11,14 @@ public class Hotwheel
     public string Rareza { get; set; } = string.Empty;
 
     public int CategoryId { get; set; }
-    
+    public int UsuarioId { get; set; }
+
     [JsonIgnore]
     public virtual Category? Category { get; set; }
 
     [JsonIgnore]
     public virtual Projection? Projection { get; set; }
+
+    [JsonIgnore]
+    public virtual Usuario? Usuario { get; set; }
 }

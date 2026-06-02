@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace backend.Models;
 
 public class Usuario
@@ -7,4 +9,7 @@ public class Usuario
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public string Rol { get; set; } = string.Empty;
+
+    [JsonIgnore]
+    public virtual ICollection<Hotwheel> Hotwheels { get; set; } = new List<Hotwheel>();
 }
