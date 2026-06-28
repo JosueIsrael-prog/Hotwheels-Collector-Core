@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services;
 
-public class ScoutingEngineService
+public class ScoutingEngineService : IScoutingEngineService
 {
     private readonly ApplicationDbContext _context;
 

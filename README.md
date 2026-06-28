@@ -24,6 +24,49 @@ El núcleo algorítmico del sistema (MSVP) ha evolucionado hacia un diseño mate
 
 Este enfoque dinámico elimina por completo las constantes (números quemados) del código, permitiendo que la volatilidad de los precios responda integralmente a factores externos variables administrados en la base de datos.
 
+### Arquitectura del Backend: Principios SOLID y Patrones de Diseño
+
+La capa de servicios del backend ha sido refactorizada aplicando principios de diseño avanzado para garantizar extensibilidad, mantenibilidad y bajo acoplamiento. A continuación se documenta el mapeo formal de componentes.
+
+#### Principios SOLID Aplicados
+
+| Principio | Sigla | Componente Clave | Implementación en el Proyecto |
+|-----------|-------|-------------------|-------------------------------|
+| **Responsabilidad Única** | SRP | `SimulationContextBuilder` | Responsabilidad exclusiva de construir el contexto de simulación. Cada clase `*GrowthStrategy` define únicamente la tasa de su rareza. |
+| **Abierto/Cerrado** | OCP | `IMarketGrowthStrategy` + `MarketGrowthStrategyResolver` | Agregar nuevas categorías de rareza se logra creando una nueva clase que implemente la interfaz, sin modificar el motor de simulación. |
+| **Inversión de Dependencia** | DIP | `IMsvpEngineFacade`, `IScoutingEngineService` | El controlador `HotwheelsController` depende exclusivamente de abstracciones inyectadas vía constructor, nunca de implementaciones concretas. |
+
+#### Patrones de Diseño Implementados
+
+| Patrón | Componentes | Propósito en el MSVP |
+|--------|-------------|----------------------|
+| **Strategy** | `IMarketGrowthStrategy` → `MainlineGrowthStrategy`, `SthGrowthStrategy`, `RlcGrowthStrategy` | Encapsula los algoritmos de crecimiento intercambiables por rareza, eliminando bloques `switch/if-else` rígidos del bucle de simulación cronológica. |
+| **Builder** | `SimulationContextBuilder` → `SimulationContext` | Construye paso a paso el escenario de simulación (precio base, estrategia, horizonte temporal, factores externos) de forma fluida y sin constantes quemadas. |
+| **Facade** | `MsvpEngineFacade` (implementa `IMsvpEngineFacade`) | Oculta la complejidad de los bucles anidados, la resolución de estrategias y la carga de factores externos tras un único método simplificado: `EjecutarProyeccionAsync()`. |
+
+#### Estructura de Archivos del Motor Refactorizado
+
+```
+backend/
+├── Services/
+│   ├── Strategies/                          # Patrón Strategy
+│   │   ├── IMarketGrowthStrategy.cs         # Interfaz de estrategia
+│   │   ├── MainlineGrowthStrategy.cs        # Tasa 5% — Producción masiva
+│   │   ├── SthGrowthStrategy.cs             # Tasa 15% — Super Treasure Hunt
+│   │   ├── RlcGrowthStrategy.cs             # Tasa 25% — Red Line Club
+│   │   └── MarketGrowthStrategyResolver.cs  # Resolutor por clave de rareza
+│   ├── Builder/                             # Patrón Builder
+│   │   ├── SimulationContext.cs             # Contexto inmutable de simulación
+│   │   └── SimulationContextBuilder.cs      # Constructor fluido del contexto
+│   ├── IMsvpEngineFacade.cs                 # Abstracción Facade (DIP)
+│   ├── MsvpEngineFacade.cs                  # Fachada del motor MSVP
+│   ├── IScoutingEngineService.cs            # Abstracción Scouting (DIP)
+│   └── ScoutingEngineService.cs             # Motor de similitud MPI
+└── Models/
+    └── MsvpModels.cs                        # DTOs de proyección financiera
+```
+
+
 ---
 
 ## 2. Sistema de Seguridad y Onboarding (RBAC)

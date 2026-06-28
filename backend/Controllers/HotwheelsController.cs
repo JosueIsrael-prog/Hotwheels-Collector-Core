@@ -11,13 +11,16 @@ namespace backend.Controllers;
 public class HotwheelsController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
-    private readonly MSVPService _msvpService;
-    private readonly ScoutingEngineService _scoutingEngineService;
+    private readonly IMsvpEngineFacade _msvpFacade;
+    private readonly IScoutingEngineService _scoutingEngineService;
 
-    public HotwheelsController(ApplicationDbContext context, MSVPService msvpService, ScoutingEngineService scoutingEngineService)
+    public HotwheelsController(
+        ApplicationDbContext context,
+        IMsvpEngineFacade msvpFacade,
+        IScoutingEngineService scoutingEngineService)
     {
         _context = context;
-        _msvpService = msvpService;
+        _msvpFacade = msvpFacade;
         _scoutingEngineService = scoutingEngineService;
     }
 
@@ -48,7 +51,7 @@ public class HotwheelsController : ControllerBase
             return NotFound(new { message = "Hotwheel no encontrado en su colección." });
         }
 
-        var proyecciones = await _msvpService.CalcularProyeccionesAsync(hotwheel);
+        var proyecciones = await _msvpFacade.EjecutarProyeccionAsync(hotwheel);
 
         var existente = await _context.Projections.FirstOrDefaultAsync(p => p.HotwheelId == id);
 

@@ -1,5 +1,6 @@
 using backend.Data;
 using backend.Services;
+using backend.Services.Strategies;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,8 +15,15 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-builder.Services.AddScoped<MSVPService>();
-builder.Services.AddScoped<ScoutingEngineService>();
+// --- Registro de Patrón Strategy: Estrategias de Crecimiento por Rareza ---
+builder.Services.AddScoped<IMarketGrowthStrategy, MainlineGrowthStrategy>();
+builder.Services.AddScoped<IMarketGrowthStrategy, SthGrowthStrategy>();
+builder.Services.AddScoped<IMarketGrowthStrategy, RlcGrowthStrategy>();
+builder.Services.AddScoped<MarketGrowthStrategyResolver>();
+
+// --- Registro de Patrón Facade + DIP: Motor MSVP y Scouting ---
+builder.Services.AddScoped<IMsvpEngineFacade, MsvpEngineFacade>();
+builder.Services.AddScoped<IScoutingEngineService, ScoutingEngineService>();
 
 builder.Services.AddCors(options =>
 {
